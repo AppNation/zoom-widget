@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 typedef ZoomWidgetBuilder = Widget Function(
     BuildContext context, Quad viewport);
 
+typedef IsPanCallback = Function(bool);
+
 @immutable
 class Zoom extends StatefulWidget {
   Zoom({
@@ -38,6 +40,7 @@ class Zoom extends StatefulWidget {
     this.scrollWeight = 10,
     this.transformationController,
     this.zoomSensibility = 1.0,
+    this.isPanCallback,
   })  : assert(maxScale > 0),
         assert(!maxScale.isNaN),
         super(key: key);
@@ -67,6 +70,7 @@ class Zoom extends StatefulWidget {
   final double scrollWeight;
   final TransformationController? transformationController;
   final double zoomSensibility;
+  final IsPanCallback? isPanCallback;
 
   static Vector3 getNearestPointOnLine(Vector3 point, Vector3 l1, Vector3 l2) {
     final double lengthSquared = math.pow(l2.x - l1.x, 2.0).toDouble() +
@@ -189,9 +193,9 @@ class _ZoomState extends State<Zoom>
   double? _scaleStart;
   _GestureType? _gestureType;
   ValueNotifier<_ScrollBarData> verticalScrollNotifier =
-      ValueNotifier(_ScrollBarData(length: 0, position: 0));
+  ValueNotifier(_ScrollBarData(length: 0, position: 0));
   ValueNotifier<_ScrollBarData> horizontalScrollNotifier =
-      ValueNotifier(_ScrollBarData(length: 0, position: 0));
+  ValueNotifier(_ScrollBarData(length: 0, position: 0));
   Size parentSize = Size.zero;
   Size childSize = Size.zero;
   Orientation? _orientation;
@@ -205,19 +209,19 @@ class _ZoomState extends State<Zoom>
     assert(_childKey.currentContext != null);
 
     final Rect boundaryRect =
-        EdgeInsets.zero.inflateRect(Offset.zero & childSize);
+    EdgeInsets.zero.inflateRect(Offset.zero & childSize);
     assert(
-      !boundaryRect.isEmpty,
-      "Zoom's child must have nonzero dimensions.",
+    !boundaryRect.isEmpty,
+    "Zoom's child must have nonzero dimensions.",
     );
 
     assert(
-      boundaryRect.isFinite ||
-          (boundaryRect.left.isInfinite &&
-              boundaryRect.top.isInfinite &&
-              boundaryRect.right.isInfinite &&
-              boundaryRect.bottom.isInfinite),
-      'boundaryRect must either be infinite in all directions or finite in all directions.',
+    boundaryRect.isFinite ||
+        (boundaryRect.left.isInfinite &&
+            boundaryRect.top.isInfinite &&
+            boundaryRect.right.isInfinite &&
+            boundaryRect.bottom.isInfinite),
+    'boundaryRect must either be infinite in all directions or finite in all directions.',
     );
     return boundaryRect;
   }
@@ -225,7 +229,7 @@ class _ZoomState extends State<Zoom>
   Rect get _viewport {
     assert(_parentKey.currentContext != null);
     final RenderBox parentRenderBox =
-        _parentKey.currentContext!.findRenderObject()! as RenderBox;
+    _parentKey.currentContext!.findRenderObject()! as RenderBox;
     return Offset.zero & parentRenderBox.size;
   }
 
@@ -251,7 +255,7 @@ class _ZoomState extends State<Zoom>
     switch (scrollType) {
       case _ScrollType.horizontal:
         percent =
-            (parentSize.width / (childSize.width * matrix.getMaxScaleOnAxis()));
+        (parentSize.width / (childSize.width * matrix.getMaxScaleOnAxis()));
         return parentSize.width * percent;
 
       case _ScrollType.vertical:
@@ -276,10 +280,10 @@ class _ZoomState extends State<Zoom>
     if (childSize.width * matrix.getMaxScaleOnAxis() >
         parentSize.width + (parentSize.width * 0.01)) {
       var horizontalPercent =
-          _getScrollPercent(matrix, scrollType: _ScrollType.horizontal);
+      _getScrollPercent(matrix, scrollType: _ScrollType.horizontal);
 
       final horizontalLength =
-          _getScrollBarLength(matrix, scrollType: _ScrollType.horizontal);
+      _getScrollBarLength(matrix, scrollType: _ScrollType.horizontal);
 
       horizontalScrollNotifier.value = _ScrollBarData(
           length: horizontalLength,
@@ -293,15 +297,15 @@ class _ZoomState extends State<Zoom>
     if (childSize.height * matrix.getMaxScaleOnAxis() >
         parentSize.height + (parentSize.height * 0.01)) {
       final verticalPercent =
-          _getScrollPercent(matrix, scrollType: _ScrollType.vertical);
+      _getScrollPercent(matrix, scrollType: _ScrollType.vertical);
 
       final verticalLength =
-          _getScrollBarLength(matrix, scrollType: _ScrollType.vertical);
+      _getScrollBarLength(matrix, scrollType: _ScrollType.vertical);
 
       verticalScrollNotifier.value = _ScrollBarData(
           length: verticalLength,
           position:
-              (verticalPercent / 100) * (parentSize.height - verticalLength));
+          (verticalPercent / 100) * (parentSize.height - verticalLength));
     } else {
       verticalScrollNotifier.value = _ScrollBarData(length: 0, position: 0);
       onDisabledScrolls();
@@ -336,7 +340,7 @@ class _ZoomState extends State<Zoom>
     );
 
     final Offset offendingDistance =
-        _exceedsBy(boundariesAabbQuad, nextViewport);
+    _exceedsBy(boundariesAabbQuad, nextViewport);
     if (offendingDistance == Offset.zero) {
       _updateScroll(nextMatrix);
       widget.onPositionUpdate?.call(_getMatrixTranslation(nextMatrix));
@@ -358,9 +362,9 @@ class _ZoomState extends State<Zoom>
       ));
 
     final Quad correctedViewport =
-        _transformViewport(correctedMatrix, _viewport);
+    _transformViewport(correctedMatrix, _viewport);
     final Offset offendingCorrectedDistance =
-        _exceedsBy(boundariesAabbQuad, correctedViewport);
+    _exceedsBy(boundariesAabbQuad, correctedViewport);
     if (offendingCorrectedDistance == Offset.zero && !fixOffset) {
       _updateScroll(correctedMatrix);
       widget.onPositionUpdate?.call(_getMatrixTranslation(correctedMatrix));
@@ -412,14 +416,14 @@ class _ZoomState extends State<Zoom>
         unidirectionalCorrectedTotalTranslation.dx +
             (widget.centerOnScale
                 ? horizontalMid < 0
-                    ? 0
-                    : horizontalMid
+                ? 0
+                : horizontalMid
                 : 0),
         unidirectionalCorrectedTotalTranslation.dy +
             (widget.centerOnScale
                 ? verticalMid < 0
-                    ? 0
-                    : verticalMid
+                ? 0
+                : verticalMid
                 : 0),
         0.0,
       ));
@@ -438,7 +442,7 @@ class _ZoomState extends State<Zoom>
     assert(scale != 0.0);
 
     final nextScale =
-        (matrix.clone()..scale(sensibleScale)).getMaxScaleOnAxis();
+    (matrix.clone()..scale(sensibleScale)).getMaxScaleOnAxis();
 
     if (childSize.width == childSize.height) {
       if (parentSize.height > parentSize.width) {
@@ -502,6 +506,9 @@ class _ZoomState extends State<Zoom>
   }
 
   void _onScaleStart(ScaleStartDetails details) {
+    if (widget.isPanCallback != null) {
+      widget.isPanCallback!(false);
+    }
     if (_controller.isAnimating) {
       _controller.stop();
       _controller.reset();
@@ -527,6 +534,9 @@ class _ZoomState extends State<Zoom>
       _gestureType = _getGestureType(details);
     } else {
       _gestureType ??= _getGestureType(details);
+    }
+    if (widget.isPanCallback != null) {
+      widget.isPanCallback!(_gestureType == _GestureType.pan);
     }
 
     switch (_gestureType!) {
@@ -558,24 +568,28 @@ class _ZoomState extends State<Zoom>
         break;
 
       case _GestureType.pan:
-        assert(_referenceFocalPoint != null);
-
-        _panAxis ??= _getPanAxis(_referenceFocalPoint!, focalPointScene);
-
-        final Offset translationChange =
-            focalPointScene - _referenceFocalPoint!;
-        _transformationController!.value = _matrixTranslate(
-          _transformationController!.value,
-          translationChange,
-        );
-        _referenceFocalPoint = _transformationController!.toScene(
-          details.localFocalPoint,
-        );
+      // assert(_referenceFocalPoint != null);
+      //
+      // _panAxis ??= _getPanAxis(_referenceFocalPoint!, focalPointScene);
+      //
+      // final Offset translationChange =
+      //     focalPointScene - _referenceFocalPoint!;
+      // _transformationController!.value = _matrixTranslate(
+      //   _transformationController!.value,
+      //   translationChange,
+      // );
+      // _referenceFocalPoint = _transformationController!.toScene(
+      //   details.localFocalPoint,
+      // );
         break;
     }
   }
 
   void _onScaleEnd(ScaleEndDetails details) {
+    if (widget.isPanCallback != null) {
+      widget.isPanCallback!(true);
+    }
+    if (_gestureType == _GestureType.pan) return;
     _scaleStart = null;
 
     _animation?.removeListener(_onAnimate);
@@ -593,7 +607,7 @@ class _ZoomState extends State<Zoom>
     }
 
     final Vector3 translationVector =
-        _transformationController!.value.getTranslation();
+    _transformationController!.value.getTranslation();
     final Offset translation = Offset(translationVector.x, translationVector.y);
     final FrictionSimulation frictionSimulationX = FrictionSimulation(
       _kDrag,
@@ -662,7 +676,7 @@ class _ZoomState extends State<Zoom>
       ));
       _scaleController.duration = doubleTapZoomIn
           ? Duration(
-              milliseconds: 100 + widget.doubleTapAnimDuration.inMilliseconds)
+          milliseconds: 100 + widget.doubleTapAnimDuration.inMilliseconds)
           : widget.doubleTapAnimDuration;
       _scaleAnimation!.addListener(_onAnimateScale);
       _scaleController.forward();
@@ -679,7 +693,7 @@ class _ZoomState extends State<Zoom>
     }
 
     final Vector3 translationVector =
-        _transformationController!.value.getTranslation();
+    _transformationController!.value.getTranslation();
     final Offset translation = Offset(translationVector.x, translationVector.y);
     final Offset translationScene = _transformationController!.toScene(
       translation,
@@ -821,10 +835,10 @@ class _ZoomState extends State<Zoom>
   void recalculateSizes() {
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       final RenderBox parentRenderBox =
-          _parentKey.currentContext!.findRenderObject()! as RenderBox;
+      _parentKey.currentContext!.findRenderObject()! as RenderBox;
       parentSize = parentRenderBox.size;
       final RenderBox childRenderBox =
-          _childKey.currentContext!.findRenderObject()! as RenderBox;
+      _childKey.currentContext!.findRenderObject()! as RenderBox;
       childSize = childRenderBox.size;
       double scale = 0;
 
@@ -941,16 +955,16 @@ class _ZoomState extends State<Zoom>
         },
         child: (widget.maxZoomWidth == null || widget.maxZoomHeight == null)
             ? Container(
-                color: widget.canvasColor,
-                child: widget.child,
-              )
+          color: widget.canvasColor,
+          child: widget.child,
+        )
             : Center(
-                child: Container(
-                    width: widget.maxZoomWidth,
-                    height: widget.maxZoomHeight,
-                    color: widget.canvasColor,
-                    child: widget.child),
-              ),
+          child: Container(
+              width: widget.maxZoomWidth,
+              height: widget.maxZoomHeight,
+              color: widget.canvasColor,
+              child: widget.child),
+        ),
       ),
     );
 
@@ -968,8 +982,8 @@ class _ZoomState extends State<Zoom>
         double opacity = widget.opacityScrollBars < 0
             ? 0
             : widget.opacityScrollBars > 1
-                ? 1
-                : widget.opacityScrollBars;
+            ? 1
+            : widget.opacityScrollBars;
 
         return ClipRect(
           child: Container(
@@ -989,57 +1003,57 @@ class _ZoomState extends State<Zoom>
                 onTap: widget.onTap,
                 child: widget.enableScroll
                     ? Stack(
-                        children: [
-                          child,
-                          ValueListenableBuilder<_ScrollBarData>(
-                              valueListenable: horizontalScrollNotifier,
-                              builder: (_, scrollData, __) {
-                                return scrollData.length == 0
-                                    ? Container()
-                                    : Positioned(
-                                        top: parentSize.height -
-                                            widget.scrollWeight,
-                                        left: scrollData.position,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              color: widget.colorScrollBars
-                                                  .withAlpha(
-                                                      (opacity * 255).toInt()),
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(
-                                                  widget.radiusScrollBars,
-                                                ),
-                                                topRight: Radius.circular(
-                                                    widget.radiusScrollBars),
-                                              )),
-                                          height: widget.scrollWeight,
-                                          width: scrollData.length,
-                                        ),
-                                      );
-                              }),
-                          ValueListenableBuilder<_ScrollBarData>(
-                              valueListenable: verticalScrollNotifier,
-                              builder: (_, scrollData, __) {
-                                return Positioned(
-                                  left: parentSize.width - widget.scrollWeight,
-                                  top: scrollData.position,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: widget.colorScrollBars
-                                            .withAlpha((opacity * 255).toInt()),
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(
-                                              widget.radiusScrollBars),
-                                          bottomLeft: Radius.circular(
-                                              widget.radiusScrollBars),
-                                        )),
-                                    height: scrollData.length,
-                                    width: widget.scrollWeight,
-                                  ),
-                                );
-                              }),
-                        ],
-                      )
+                  children: [
+                    child,
+                    ValueListenableBuilder<_ScrollBarData>(
+                        valueListenable: horizontalScrollNotifier,
+                        builder: (_, scrollData, __) {
+                          return scrollData.length == 0
+                              ? Container()
+                              : Positioned(
+                            top: parentSize.height -
+                                widget.scrollWeight,
+                            left: scrollData.position,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: widget.colorScrollBars
+                                      .withAlpha(
+                                      (opacity * 255).toInt()),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(
+                                      widget.radiusScrollBars,
+                                    ),
+                                    topRight: Radius.circular(
+                                        widget.radiusScrollBars),
+                                  )),
+                              height: widget.scrollWeight,
+                              width: scrollData.length,
+                            ),
+                          );
+                        }),
+                    ValueListenableBuilder<_ScrollBarData>(
+                        valueListenable: verticalScrollNotifier,
+                        builder: (_, scrollData, __) {
+                          return Positioned(
+                            left: parentSize.width - widget.scrollWeight,
+                            top: scrollData.position,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: widget.colorScrollBars
+                                      .withAlpha((opacity * 255).toInt()),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(
+                                        widget.radiusScrollBars),
+                                    bottomLeft: Radius.circular(
+                                        widget.radiusScrollBars),
+                                  )),
+                              height: scrollData.length,
+                              width: widget.scrollWeight,
+                            ),
+                          );
+                        }),
+                  ],
+                )
                     : child,
               ),
             ),
@@ -1204,13 +1218,4 @@ Offset _round(Offset offset) {
     double.parse(offset.dx.toStringAsFixed(9)),
     double.parse(offset.dy.toStringAsFixed(9)),
   );
-}
-
-Axis? _getPanAxis(Offset point1, Offset point2) {
-  if (point1 == point2) {
-    return null;
-  }
-  final double x = point2.dx - point1.dx;
-  final double y = point2.dy - point1.dy;
-  return x.abs() > y.abs() ? Axis.horizontal : Axis.vertical;
 }
