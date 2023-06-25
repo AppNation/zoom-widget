@@ -833,12 +833,14 @@ class _ZoomState extends State<Zoom>
   }
 
   void recalculateSizes() {
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
-      final RenderBox parentRenderBox =
-      _parentKey.currentContext!.findRenderObject()! as RenderBox;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? parentRenderBox =
+      _parentKey.currentContext?.findRenderObject() as RenderBox?;
+      if (parentRenderBox == null) return;
       parentSize = parentRenderBox.size;
-      final RenderBox childRenderBox =
-      _childKey.currentContext!.findRenderObject()! as RenderBox;
+      final RenderBox? childRenderBox =
+      _childKey.currentContext?.findRenderObject() as RenderBox?;
+      if (childRenderBox == null) return;
       childSize = childRenderBox.size;
       double scale = 0;
 
