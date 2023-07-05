@@ -41,7 +41,8 @@ class Zoom extends StatefulWidget {
     this.transformationController,
     this.zoomSensibility = 1.0,
     this.isPanCallback,
-  })  : assert(maxScale > 0),
+  })
+      : assert(maxScale > 0),
         assert(!maxScale.isNaN),
         super(key: key);
 
@@ -442,7 +443,8 @@ class _ZoomState extends State<Zoom>
     assert(scale != 0.0);
 
     final nextScale =
-    (matrix.clone()..scale(sensibleScale)).getMaxScaleOnAxis();
+    (matrix.clone()
+      ..scale(sensibleScale)).getMaxScaleOnAxis();
 
     if (childSize.width == childSize.height) {
       if (parentSize.height > parentSize.width) {
@@ -458,12 +460,13 @@ class _ZoomState extends State<Zoom>
       }
     } else {
       if (childSize.height < childSize.width) {
-        if ((childSize.width * nextScale) < parentSize.width &&
+        if ((childSize.width * nextScale).toInt() < parentSize.width.toInt() &&
             nextScale < 1.0) {
           return matrix.clone();
         }
       } else {
-        if ((childSize.height * nextScale) < parentSize.height &&
+        if ((childSize.height * nextScale).toInt() <
+            parentSize.height.toInt() &&
             nextScale < 1.0) {
           return matrix.clone();
         }
@@ -1151,7 +1154,8 @@ Offset _getMatrixTranslation(Matrix4 matrix) {
 }
 
 Quad _transformViewport(Matrix4 matrix, Rect viewport) {
-  final Matrix4 inverseMatrix = matrix.clone()..invert();
+  final Matrix4 inverseMatrix = matrix.clone()
+    ..invert();
   return Quad.points(
     inverseMatrix.transform3(Vector3(
       viewport.topLeft.dx,
