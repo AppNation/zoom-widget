@@ -450,12 +450,25 @@ class _ZoomState extends State<Zoom>
       if (parentSize.height > parentSize.width) {
         if ((childSize.width * nextScale) < parentSize.width &&
             nextScale < 1.0) {
-          return matrix.clone();
+          Matrix4 newMatrix = matrix.clone();
+          if (firstDraw) {
+            final scale = parentSize.width / childSize.width;
+            newMatrix = newMatrix..scale(scale, scale);
+          }
+          firstDraw = false;
+          return newMatrix;
         }
       } else {
         if ((childSize.height * nextScale) < parentSize.height &&
             nextScale < 1.0) {
-          return matrix.clone();
+          Matrix4 newMatrix = matrix.clone();
+          if (firstDraw) {
+            final scale = parentSize.height / childSize.height;
+            newMatrix = newMatrix..scale(scale, scale);
+          }
+
+          firstDraw = false;
+          return newMatrix;
         }
       }
     } else {
